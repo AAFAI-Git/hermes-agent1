@@ -10,6 +10,14 @@ set -euo pipefail
 export HERMES_HOME="${HERMES_HOME:-/opt/data}"
 
 # --- Public HTTP surface (Railway edge proxy -> container) ---
+# Railway Web/HTTP services inject PORT. Without it, Hermes would default to 8642
+# while the platform health checker probes PORT — permanent "service unavailable".
+if [ -n "${RAILWAY_PROJECT_ID:-}" ] && [ -z "${PORT:-}" ]; then
+  echo "ERROR: PORT is not set. In Railway open the service → Settings → Networking" >&2
+  echo "  and generate a public domain (or otherwise enable HTTP), so Railway injects PORT." >&2
+  echo "  Alternatively set variable PORT to the same port the API server will bind." >&2
+  exit 1
+fi
 if [ -n "${PORT:-}" ]; then
   export API_SERVER_PORT="${API_SERVER_PORT:-$PORT}"
 fi

@@ -69,8 +69,8 @@ if [ "${MERGE_RAILWAY_ENV_IN_DOTENV:-}" = "1" ] && [ -n "${API_SERVER_KEY:-}" ] 
     _rf="$HERMES_HOME/.env"
     if [ -f "$_rf" ]; then
         sed -i \
+            -e '/^[[:space:]]*API_SERVER_PORT=/d' \
             -e '/^[[:space:]]*API_SERVER_KEY=[[:space:]]*$/d' \
-            -e '/^[[:space:]]*API_SERVER_PORT=[[:space:]]*$/d' \
             -e '/^[[:space:]]*API_SERVER_HOST=[[:space:]]*$/d' \
             -e '/^[[:space:]]*API_SERVER_ENABLED=[[:space:]]*$/d' \
             "$_rf" 2>/dev/null || true
