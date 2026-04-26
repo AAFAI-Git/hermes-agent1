@@ -5,10 +5,10 @@
     "dockerfilePath": "Dockerfile.railway"
   },
   "deploy": {
-    "startCommand": "hermes gateway run",
+    "startCommand": "hermes gateway run --replace -v",
     "healthcheckPath": "/health",
-    "healthcheckTimeout": 300,
-    "startupTimeout": 300,
+    "healthcheckTimeout": 600,
+    "startupTimeout": 600,
     "restartPolicyType": "ON_FAILURE"
   }
 }

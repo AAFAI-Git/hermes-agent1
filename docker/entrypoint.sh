@@ -62,6 +62,33 @@ if [ ! -f "$HERMES_HOME/.env" ]; then
     cp "$INSTALL_DIR/.env.example" "$HERMES_HOME/.env"
 fi
 
+# Railway / dotenv interaction: Hermes loads ~/.hermes/.env with override=True.
+# Empty lines like API_SERVER_KEY= wipe real secrets injected by the platform.
+# Refresh a small stanza so the API server always binds $PORT for health checks.
+if [ "${MERGE_RAILWAY_ENV_IN_DOTENV:-}" = "1" ] && [ -n "${API_SERVER_KEY:-}" ] && [ -n "${PORT:-}" ]; then
+    _rf="$HERMES_HOME/.env"
+    if [ -f "$_rf" ]; then
+        sed -i \
+            -e '/^[[:space:]]*API_SERVER_KEY=[[:space:]]*$/d' \
+            -e '/^[[:space:]]*API_SERVER_PORT=[[:space:]]*$/d' \
+            -e '/^[[:space:]]*API_SERVER_HOST=[[:space:]]*$/d' \
+            -e '/^[[:space:]]*API_SERVER_ENABLED=[[:space:]]*$/d' \
+            "$_rf" 2>/dev/null || true
+        if grep -q '^# railway-auto-begin' "$_rf" 2>/dev/null; then
+            sed -i '/^# railway-auto-begin/,/^# railway-auto-end/d' "$_rf" 2>/dev/null || true
+        fi
+    fi
+    {
+        echo ""
+        echo "# railway-auto-begin"
+        echo "API_SERVER_ENABLED=1"
+        echo "API_SERVER_HOST=${API_SERVER_HOST:-0.0.0.0}"
+        echo "API_SERVER_PORT=${PORT}"
+        echo "API_SERVER_KEY=${API_SERVER_KEY}"
+        echo "# railway-auto-end"
+    } >> "$_rf"
+fi
+
 # config.yaml
 if [ ! -f "$HERMES_HOME/config.yaml" ]; then
     cp "$INSTALL_DIR/cli-config.yaml.example" "$HERMES_HOME/config.yaml"

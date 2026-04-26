@@ -64,8 +64,10 @@ ENV PATH="/opt/data/.local/bin:${PATH}"
 # Railway-friendly defaults (railway-entrypoint still honors overrides)
 ENV API_SERVER_ENABLED=1
 ENV API_SERVER_HOST=0.0.0.0
+# After .env bootstrap, append API server stanza so dotenv override=True cannot blank PORT/KEY.
+ENV MERGE_RAILWAY_ENV_IN_DOTENV=1
 
 ENTRYPOINT [ "/usr/bin/tini", "-g", "--", "/opt/hermes/docker/railway-entrypoint.sh" ]
 
-# Exec-form: first token must be a real binary on PATH. `gateway` alone is invalid.
-CMD [ "hermes", "gateway", "run" ]
+# --replace: clear stale gateway.pid on restarts. -v: INFO logs to stderr for Railway.
+CMD [ "hermes", "gateway", "run", "--replace", "-v" ]
