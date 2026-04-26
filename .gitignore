@@ -1,3 +1,6 @@
+# Nested clone of this repo inside itself (never commit — breaks workflow)
+/hermes-agent1/
+
 .DS_Store
 /venv/
 /_pycache/
