@@ -1,0 +1,7 @@
+# Hermes Agent on Railway (gleaming-embrace)
+
+- **Builder:** `railway.json` uses `DOCKERFILE` + `Dockerfile.railway`. Nixpacks config does not apply to this build; Python/runtime come from the Dockerfile (see `FROM` / `uv` base there).
+- **Data directory:** Hermes uses `HERMES_HOME` (default `/opt/data`). Session path is `$HERMES_HOME/sessions` (e.g. `/opt/data/sessions`). Prefer a Railway volume mounted at **`/opt/data`**, not `/data`, unless you change `HERMES_HOME`.
+- **HTTP (full stack):** `railway.json` runs `docker/railway-fullstack.sh`: **nginx** listens on Railway `PORT`; **`/health` and `/v1`** proxy to the gateway (internal `HERMES_GATEWAY_INTERNAL_PORT`, default 18080); **`/`** proxies to `hermes dashboard` (internal 9119). Gateway and dashboard share **`HERMES_HOME=/opt/data`** in the same container — mount a Railway volume there for persistence.
+- **HTTP (gateway-only):** If you ever switch `startCommand` back to `hermes gateway run --replace -v`, `railway-entrypoint.sh` maps `PORT` → `API_SERVER_PORT` as before. Public bind still requires `API_SERVER_KEY`.
+- **CLI context:** From this repo run `railway status --json` after `railway link` so commands target **gleaming-embrace** / **hermes-agent** (avoid wrong project).

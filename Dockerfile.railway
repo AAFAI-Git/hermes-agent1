@@ -6,13 +6,14 @@
 #   - Enables the API server so /health answers for Railway health checks
 #   - Requires API_SERVER_KEY when binding 0.0.0.0 (matches gateway security)
 #
-# Railway checklist (dashboard):
+# Railway checklist:
 #   1. Service → Settings → Root Directory: repo root (default).
 #   2. Build: Dockerfile path = Dockerfile.railway (or rely on railway.json).
 #   3. Variables (minimum): API_SERVER_KEY=$(openssl rand -hex 32)
-#   4. Add a Volume → mount path: /opt/data (5+ GB recommended).
-#   5. Resources: ≥ 4 GB RAM / 2 vCPU if browser + Hindsight are enabled.
-#   6. Default CMD: hermes gateway run (Railway may override — use same wording).
+#   4. Add a Volume → mount path: /opt/data (gateway + dashboard share this path).
+#   5. Resources: ≥ 4 GB RAM / 2 vCPU recommended for gateway + dashboard + nginx.
+#   6. startCommand (railway.json): bash /opt/hermes/docker/railway-fullstack.sh
+#      → one container: nginx on $PORT, /health + /v1* → gateway, / → web dashboard.
 #
 # https://github.com/AAFAI-Git/hermes-agent1
 
@@ -25,7 +26,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/opt/hermes/.playwright
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        build-essential nodejs npm python3 ripgrep ffmpeg gcc python3-dev libffi-dev procps git openssh-client docker-cli tini ca-certificates && \
+        build-essential nodejs npm python3 ripgrep ffmpeg gcc python3-dev libffi-dev procps git openssh-client docker-cli tini ca-certificates curl nginx && \
     rm -rf /var/lib/apt/lists/*
 
 # Default UID/GID 1000 for volume ownership on Railway; entrypoint may remap.
@@ -47,6 +48,7 @@ RUN npm install --prefer-offline --no-audit && \
 COPY --chown=hermes:hermes . .
 
 COPY --chmod=0755 docker/railway-entrypoint.sh /opt/hermes/docker/railway-entrypoint.sh
+COPY --chmod=0755 docker/railway-fullstack.sh /opt/hermes/docker/railway-fullstack.sh
 
 RUN cd web && npm run build
 
