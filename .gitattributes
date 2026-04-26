@@ -1,2 +1,2 @@
-# Auto-generated files — collapse diffs and exclude from language stats
-web/package-lock.json linguist-generated=true
+# Shell entrypoints must use LF in the image (Railway/Linux).
+docker/*.sh text eol=lf

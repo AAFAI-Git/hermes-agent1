@@ -50,6 +50,12 @@ COPY --chown=hermes:hermes . .
 COPY --chmod=0755 docker/railway-entrypoint.sh /opt/hermes/docker/railway-entrypoint.sh
 COPY --chmod=0755 docker/railway-fullstack.sh /opt/hermes/docker/railway-fullstack.sh
 
+# CRLF line endings break shebang/scripts on Linux (Windows checkouts).
+RUN sed -i 's/\r$//' /opt/hermes/docker/railway-fullstack.sh /opt/hermes/docker/railway-entrypoint.sh /opt/hermes/docker/entrypoint.sh
+
+# Bulk COPY from repo does not preserve +x; railway-entrypoint exec's this file.
+RUN chmod 0755 /opt/hermes/docker/entrypoint.sh
+
 RUN cd web && npm run build
 
 USER root
