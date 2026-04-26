@@ -27,6 +27,14 @@ trap _term SIGINT SIGTERM
 
 echo "railway-fullstack: edge :${RAILWAY_EDGE_PORT} -> gateway :${GW_PORT}, dashboard :${DASH_PORT}" >&2
 
+# The first railway-entrypoint pass merged API_SERVER_PORT=${RAILWAY_EDGE_PORT} into .env.
+# If the gateway then reads 8080 while nginx also binds 8080, nothing listens and healthchecks
+# fail. Strip the auto stanza so the nested gateway merge writes the internal port only.
+_data="${HERMES_HOME:-/opt/data}"
+if [ -f "${_data}/.env" ]; then
+  sed -i '/^# railway-auto-begin/,/^# railway-auto-end/d' "${_data}/.env" 2>/dev/null || true
+fi
+
 # --- Gateway (internal API + /health) ---
 PORT="${GW_PORT}" API_SERVER_PORT="${GW_PORT}" \
   /usr/bin/tini -g -- /opt/hermes/docker/railway-entrypoint.sh \
@@ -47,10 +55,11 @@ if [ "${_ok}" != 1 ]; then
   exit 1
 fi
 
-# --- Dashboard (loopback only; nginx is the public edge) ---
+# --- Dashboard (bind 0.0.0.0: nginx forwards Host: <public>; loopback-only rejects that) ---
+# Port ${DASH_PORT} is not published by Railway; only nginx on $PORT is on the edge.
 export GATEWAY_HEALTH_URL="http://127.0.0.1:${GW_PORT}"
 /usr/bin/tini -g -- /opt/hermes/docker/entrypoint.sh \
-  hermes dashboard --host 127.0.0.1 --port "${DASH_PORT}" --no-open &
+  hermes dashboard --host 0.0.0.0 --port "${DASH_PORT}" --no-open --insecure &
 DASHPID=$!
 
 echo "railway-fullstack: waiting for dashboard /api/status..." >&2
@@ -110,6 +119,9 @@ http {
   }
 }
 EOF
+
+echo "railway-fullstack: nginx config test..." >&2
+nginx -t -c "${NGINX_CONF}" >&2
 
 echo "railway-fullstack: starting nginx on :${RAILWAY_EDGE_PORT}" >&2
 nginx -g "daemon off;" -c "${NGINX_CONF}" &
