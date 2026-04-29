@@ -1,0 +1,37 @@
+# Example Hermes config for Railway: DeepSeek V4 Pro (main) + V4 Flash (fast/delegation).
+# Copy the blocks you need into /opt/data/config.yaml (HERMES_HOME), then redeploy or restart gateway.
+#
+# 1) Railway / .env: set DEEPSEEK_API_KEY (from https://platform.deepseek.com — do not commit).
+#
+# 2) DeepSeek API model IDs (official): deepseek-v4-pro | deepseek-v4-flash
+#    Docs: https://api-docs.deepseek.com/news/news260424
+#
+# 3) Optional third path — self-hosted Ollama on Railway: deploy a separate Ollama template in the
+#    same project, pull a model (e.g. deepseek-v4-flash:cloud from https://ollama.com/library/deepseek-v4-flash).
+#    Then add Railway variables on the Hermes service:
+#      OLLAMA_OPENAI_BASE_URL=http://<ollama-service>.railway.internal:11434/v1
+#      OLLAMA_FALLBACK_API_KEY=not-needed   # or real key if your template uses a proxy
+#    Uncomment fallback_model below.
+
+model:
+  provider: deepseek
+  default: deepseek-v4-pro
+
+delegation:
+  provider: deepseek
+  model: deepseek-v4-flash
+
+auxiliary:
+  vision:
+    provider: deepseek
+    model: deepseek-v4-flash
+  web_extract:
+    provider: deepseek
+    model: deepseek-v4-flash
+
+# Uncomment when Ollama is deployed and env vars above are set:
+# fallback_model:
+#   provider: custom
+#   model: deepseek-v4-flash:cloud
+#   base_url: "${OLLAMA_OPENAI_BASE_URL}"
+#   key_env: OLLAMA_FALLBACK_API_KEY
